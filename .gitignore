@@ -1,0 +1,3 @@
+#local terraform directory and tf vars file to protect sensitive data
+terraform-dev.tfvars        
+.terraform/*
