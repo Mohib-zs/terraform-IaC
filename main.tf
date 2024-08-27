@@ -17,24 +17,27 @@ variable my_ip {}
 variable vm_size {}
 variable vm_username {}
 variable public_key_location {}
+variable private_key_location {}
+variable source_file_location {}
+variable destination_file_location {}
 
-locals {
-  custom_data = <<CUSTOM_DATA
-#!/bin/bash
-sudo -i
-cat << EOF > /etc/customdata.sh
-sudo apt update && sudo apt -y upgrade
-sudo apt install -y docker.io
-sudo systemctl start docker
-sudo usermod -aG docker devuser
-docker run -p 8080:80 nginx 
-EOF
-chmod +x /etc/customdata.sh
-sudo /etc/customdata.sh
-CUSTOM_DATA
+# locals {
+#   custom_data = <<CUSTOM_DATA
+# #!/bin/bash
+# sudo -i
+# cat << EOF > /etc/customdata.sh
+# sudo apt update && sudo apt -y upgrade
+# sudo apt install -y docker.io
+# sudo systemctl start docker
+# sudo usermod -aG docker devuser
+# docker run -p 8080:80 nginx 
+# EOF
+# chmod +x /etc/customdata.sh
+# sudo /etc/customdata.sh
+# CUSTOM_DATA
 
-  user_data = file("startup-script.sh")
-}
+#   user_data = file("startup-script.sh")
+# }
 
 resource "azurerm_resource_group" "my-app" {
   name     = "${var.env_prefix}-resources"
@@ -85,7 +88,7 @@ resource "azurerm_network_security_group" "my-app" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefix      = "${var.my_ip}"
+    source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
   
@@ -134,7 +137,7 @@ resource "azurerm_linux_virtual_machine" "my-app" {
   location            = azurerm_resource_group.my-app.location
   size                = var.vm_size
   admin_username      = var.vm_username
-  user_data           = base64encode(local.user_data)
+  # user_data           = base64encode(local.user_data)
   network_interface_ids = [
     azurerm_network_interface.my-app.id,
   ]
@@ -156,6 +159,33 @@ resource "azurerm_linux_virtual_machine" "my-app" {
     version   = "latest"
   }
 
+  connection {
+  type        = "ssh"
+  user        = "devuser"
+  private_key = file(var.private_key_location)   # Path to your private key
+  host        = self.public_ip_address
+  timeout     = "1m"
+  }
+  # provisioners are not recommended and should be used as a last restort to work around
+  # user_data is better than remote-exec and local_file than local-exec
+  # provisioners break the declarative methodology and idempotency of terraform as it can't compare or access the custom data/scripts
+  # use configuration tools like ansible, chef or puppet for remote configuratuons instead or use CI/CD tools to execute scripts
+  provisioner "file" {
+    source      = var.source_file_location                 # Local path to your script
+    destination = var.destination_file_location            # Destination on the VM
+  }
+
+  provisioner "remote-exec" {
+    script = file("startup-script.sh")
+    # inline = [
+    #   "sudo chmod +x /home/devuser/startup-script.sh",         # Make the script executable
+    #   "/home/devuser/startup-script.sh",                       # Execute the script               
+    # ]
+  }
+
+  provisioner "local-exec" {
+    command = "echp ${self.public_ip_address} > output.txt"
+  }
 }
 
 data "azurerm_public_ip" "my-app" {
