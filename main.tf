@@ -1,23 +1,3 @@
-provider "azurerm" {
-  features {}
-
-  skip_provider_registration = true
-  subscription_id   = var.subscription_id
-}
-
-variable subscription_id {
-  type = string
-}
-
-variable subnet_cidr_block {}
-variable vnet_cidr_block {}
-variable env_prefix {}
-variable location {}
-variable my_ip {}
-variable vm_size {}
-variable vm_username {}
-variable public_key_location {}
-
 locals {
   custom_data = <<CUSTOM_DATA
 #!/bin/bash
@@ -48,84 +28,14 @@ resource "azurerm_virtual_network" "my-app" {
   address_space       = [var.vnet_cidr_block]
 }
 
-resource "azurerm_subnet" "my-app" {
-  name                 = "${var.env_prefix}-subnet-1"
+module "my-app-subnet" {
+  source               = "./modules/subnet"
+  subnet_cidr_block    = var.subnet_cidr_block
+  location             = var.location
+  virtual_network_name = azurerm_virtual_network.my-app.name 
+  env_prefix           = var.env_prefix
+  my_ip                = var.my_ip
   resource_group_name  = azurerm_resource_group.my-app.name
-  virtual_network_name = azurerm_virtual_network.my-app.name
-  address_prefixes     = [var.subnet_cidr_block]
-}
-
-resource "azurerm_subnet_route_table_association" "my-app" {
-  subnet_id      = azurerm_subnet.my-app.id
-  route_table_id = azurerm_route_table.my-app.id
-}
-
-resource "azurerm_route_table" "my-app" {
-  name                = "${var.env_prefix}-route-table"
-  location            = azurerm_resource_group.my-app.location
-  resource_group_name = azurerm_resource_group.my-app.name
-
-  route {
-    name           = "route1"
-    address_prefix = "0.0.0.0/0"
-    next_hop_type  = "Internet"
-  }
-}
-
-resource "azurerm_network_security_group" "my-app" {
-  name                = "${var.env_prefix}-nsg"
-  location            = azurerm_resource_group.my-app.location
-  resource_group_name = azurerm_resource_group.my-app.name
-
-  security_rule {
-    name                       = "SSH"
-    priority                   = 300
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefix      = "${var.my_ip}"
-    destination_address_prefix = "*"
-  }
-  
-  security_rule {
-    name                       = "web-host"
-    priority                   = 320
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "8080"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }  
-
-}
-
-resource "azurerm_public_ip" "my-app" {
-  name                = "${var.env_prefix}-public-ip"
-  resource_group_name = azurerm_resource_group.my-app.name
-  location            = azurerm_resource_group.my-app.location
-  allocation_method   = "Dynamic"
-}
-
-resource "azurerm_network_interface" "my-app" {
-  name                = "${var.env_prefix}-nic"
-  location            = azurerm_resource_group.my-app.location
-  resource_group_name = azurerm_resource_group.my-app.name
-
-  ip_configuration {
-    name                          = "internal"
-    subnet_id                     = azurerm_subnet.my-app.id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.my-app.id
-  }
-}
-
-resource "azurerm_network_interface_security_group_association" "my-app" {
-  network_interface_id      = azurerm_network_interface.my-app.id
-  network_security_group_id = azurerm_network_security_group.my-app.id
 }
 
 resource "azurerm_linux_virtual_machine" "my-app" {
@@ -134,9 +44,9 @@ resource "azurerm_linux_virtual_machine" "my-app" {
   location            = azurerm_resource_group.my-app.location
   size                = var.vm_size
   admin_username      = var.vm_username
-  user_data           = base64encode(local.user_data)
+  # user_data           = base64encode(local.user_data)
   network_interface_ids = [
-    azurerm_network_interface.my-app.id,
+    module.my-app-subnet.network_interface.id,
   ]
 
   admin_ssh_key {
@@ -159,11 +69,9 @@ resource "azurerm_linux_virtual_machine" "my-app" {
 }
 
 data "azurerm_public_ip" "my-app" {
-  name                = azurerm_public_ip.my-app.name
-  resource_group_name = azurerm_linux_virtual_machine.my-app.resource_group_name
+  name                = module.my-app-subnet.public_ip_address.name
+  resource_group_name = azurerm_resource_group.my-app.name
 }
 
-output "public_ip_address" {
-  value = data.azurerm_public_ip.my-app.ip_address
-}
+
 
