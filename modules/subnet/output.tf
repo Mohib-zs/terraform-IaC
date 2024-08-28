@@ -5,4 +5,3 @@ output "public_ip_address" {
 output "network_interface" {
   value = azurerm_network_interface.my-app
 }
-

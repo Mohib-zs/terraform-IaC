@@ -78,4 +78,8 @@ resource "azurerm_public_ip" "my-app" {
   allocation_method   = "Dynamic"
 }
 
+data "azurerm_public_ip" "my-app" {
+  name                = azurerm_public_ip.my-app.name
+  resource_group_name = var.resource_group_name
+}
 

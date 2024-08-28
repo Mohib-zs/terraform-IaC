@@ -2,3 +2,4 @@
 terraform-dev.auto.tfvars        
 .terraform/*
 terraform.*
+crash.log

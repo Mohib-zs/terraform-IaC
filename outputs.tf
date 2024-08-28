@@ -1,3 +1,3 @@
-output "public_ip_address" {
-  value = data.azurerm_public_ip.my-app.ip_address
+output "public_ip" {
+  value = module.my-app-subnet.public_ip_address.ip_address
 }
