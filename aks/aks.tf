@@ -4,6 +4,13 @@ data "azurerm_kubernetes_cluster" "default" {
   resource_group_name = var.resource_group_name
 }
 
+data "terraform_remote_state" "vnet" {
+  backend = "local"  # or use another backend like S3, etc.
+  config = {
+    path = "../vnet/terraform.tfstate"  # adjust the path to your first folder's state file
+  }
+}
+
 module "my-app-aks" {
   source  = "Azure/aks/azurerm"
   version = "9.1.0"
@@ -11,7 +18,7 @@ module "my-app-aks" {
   resource_group_name                 = var.resource_group_name
   prefix                              = "my-app"
 
-  vnet_subnet_id                      = module.my-app-vnet.vnet_subnets_name_id["private-subnet-1"]
+  vnet_subnet_id                      = data.terraform_remote_state.vnet.outputs.subnet_ids["private-subnet-1"]
   enable_auto_scaling                 = true
   agents_pool_name                    = "default"
   agents_min_count                    = 1
@@ -35,7 +42,7 @@ module "my-app-aks" {
   net_profile_outbound_type                     = "userAssignedNATGateway"
   
   depends_on = [
-    azurerm_subnet_nat_gateway_association.subnet_nat_associations
+    data.terraform_remote_state.vnet
   ]
 
   role_based_access_control_enabled             = true 
@@ -45,7 +52,7 @@ module "my-app-aks" {
   node_pools = {
     pool2 = {
       name                = "pool2"
-      vnet_subnet_id      = module.my-app-vnet.vnet_subnets_name_id["private-subnet-2"]
+      vnet_subnet_id      = data.terraform_remote_state.vnet.outputs.subnet_ids["private-subnet-2"]
       vm_size             = var.vm_size
       enable_auto_scaling = true
       min_count           = 1
@@ -54,7 +61,7 @@ module "my-app-aks" {
     }
     pool3 = {
       name                = "pool3"
-      vnet_subnet_id      = module.my-app-vnet.vnet_subnets_name_id["private-subnet-3"]
+      vnet_subnet_id      = data.terraform_remote_state.vnet.outputs.subnet_ids["private-subnet-3"]
       vm_size             = var.vm_size
       enable_auto_scaling = true
       min_count           = 1
@@ -110,16 +117,6 @@ module "my-app-aks" {
     #   availability_zones  = ["3"]
     # }
   }
-}
-
-# Outputs
-output "aks_cluster_name" {
-  value = module.my-app-aks.aks_name
-}
-
-output "aks_cluster_kubeconfig" {
-  value     = module.my-app-aks.kube_config_raw
-  sensitive = true
 }
 
 

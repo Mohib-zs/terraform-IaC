@@ -40,10 +40,6 @@ resource "azurerm_subnet_nat_gateway_association" "subnet_nat_associations" {
   nat_gateway_id  = azurerm_nat_gateway.nat_gateway.id 
 }
 
-output "gateway_ips" {
-  value = azurerm_public_ip.nat_gateway_ip.ip_address 
-}
-
 # resource "azurerm_route_table" "route_table" {
 #   name                = "my-route-table"
 #   location            = var.location

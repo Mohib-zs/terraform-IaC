@@ -20,14 +20,7 @@ variable client_secret {
     type        = string
     sensitive   = true
 }
-variable rbac_aad_admin_group_object_ids {
-    type        = list(string)
-    sensitive   = true
-}
 variable resource_group_name {}
 variable vnet_name {}
 variable location {}
-variable address_space {}
-variable subnet_names {}
-variable subnet_prefixes {}
 variable vm_size {}
