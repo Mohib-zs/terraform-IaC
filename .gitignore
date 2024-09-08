@@ -1,7 +1,7 @@
 #local terraform directory and tf vars file to protect sensitive data
-aks/terraform.tfvars
-vnet/terraform.tfvars
-rg/terraform.tfvars        
+aks/terraform.*
+vnet/terraform.*
+rg/terraform.*        
 aks/.terraform/*
 vnet/.terraform/*
 rg/.terraform/*
