@@ -25,5 +25,6 @@ variable tenant_id {
 #     sensitive   = true
 # }
 variable resource_group_name {}
+variable storage_account_name {}
 variable location {}
 variable vm_size {}

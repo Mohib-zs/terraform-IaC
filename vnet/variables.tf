@@ -30,3 +30,4 @@ variable location {}
 variable address_space {}
 variable subnet_names {}
 variable subnet_prefixes {}
+variable storage_account_name {}

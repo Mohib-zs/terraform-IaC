@@ -5,9 +5,12 @@ data "azurerm_kubernetes_cluster" "default" {
 }
 
 data "terraform_remote_state" "vnet" {
-  backend = "local"
+  backend = "azurerm"
   config = {
-    path = "../vnet/terraform.tfstate"
+    resource_group_name     = var.resource_group_name
+    storage_account_name    = var.storage_account_name
+    container_name          = "terraform-backend"
+    key                     = "terraform.vnet-tfstate"
   }
 }
 
@@ -68,54 +71,54 @@ module "my-app-aks" {
       max_count           = 2
       availability_zones  = ["3"]      
     }
-    # spot1 = {
-    #   name                = "spot1"
-    #   vnet_subnet_id      = module.my-app-vnet.vnet_subnets_name_id["private-subnet-1"]
-    #   vm_size             = var.vm_size
-    #   min_count           = 1
-    #   max_count           = 2
-    #   priority            = "Spot"
-    #   eviction_policy     = "Delete"
-    #   spot_max_price      = -1
-    #   node_taints         = ["workload=spot:NoSchedule"]
-    #   node_labels         = { "workload" = "spot" }
-    #   enable_auto_scaling = true
-    #   max_pods            = 30
-    #   os_disk_size_gb     = 30
-    #   availability_zones  = ["1"]
-    # }
-    # spot2 = {
-    #   name                = "spot2"
-    #   vnet_subnet_id      = module.my-app-vnet.vnet_subnets_name_id["private-subnet-2"]
-    #   vm_size             = var.vm_size
-    #   min_count           = 1
-    #   max_count           = 2
-    #   priority            = "Spot"
-    #   eviction_policy     = "Delete"
-    #   spot_max_price      = -1
-    #   node_taints         = ["workload=spot:NoSchedule"]
-    #   node_labels         = { "workload" = "spot" }
-    #   enable_auto_scaling = true
-    #   max_pods            = 30
-    #   os_disk_size_gb     = 30
-    #   availability_zones  = ["2"]
-    # }
-    # spot3 = {
-    #   name                = "spot3"
-    #   vnet_subnet_id      = module.my-app-vnet.vnet_subnets_name_id["private-subnet-3"]
-    #   vm_size             = var.vm_size
-    #   min_count           = 1
-    #   max_count           = 2
-    #   priority            = "Spot"
-    #   eviction_policy     = "Delete"
-    #   spot_max_price      = -1
-    #   node_taints         = ["workload=spot:NoSchedule"]
-    #   node_labels         = { "workload" = "spot" }
-    #   enable_auto_scaling = true
-    #   max_pods            = 30
-    #   os_disk_size_gb     = 30
-    #   availability_zones  = ["3"]
-    # }
+    spot1 = {
+      name                = "spot1"
+      vnet_subnet_id      = data.terraform_remote_state.vnet.outputs.subnet_ids["private-subnet-1"]
+      vm_size             = var.vm_size
+      min_count           = 1
+      max_count           = 2
+      priority            = "Spot"
+      eviction_policy     = "Delete"
+      spot_max_price      = -1
+      node_taints         = ["workload=spot:NoSchedule"]
+      node_labels         = { "workload" = "spot" }
+      enable_auto_scaling = true
+      max_pods            = 30
+      os_disk_size_gb     = 30
+      availability_zones  = ["1"]
+    }
+    spot2 = {
+      name                = "spot2"
+      vnet_subnet_id      = data.terraform_remote_state.vnet.outputs.subnet_ids["private-subnet-2"]
+      vm_size             = var.vm_size
+      min_count           = 1
+      max_count           = 2
+      priority            = "Spot"
+      eviction_policy     = "Delete"
+      spot_max_price      = -1
+      node_taints         = ["workload=spot:NoSchedule"]
+      node_labels         = { "workload" = "spot" }
+      enable_auto_scaling = true
+      max_pods            = 30
+      os_disk_size_gb     = 30
+      availability_zones  = ["2"]
+    }
+    spot3 = {
+      name                = "spot3"
+      vnet_subnet_id      = data.terraform_remote_state.vnet.outputs.subnet_ids["private-subnet-3"]
+      vm_size             = var.vm_size
+      min_count           = 1
+      max_count           = 2
+      priority            = "Spot"
+      eviction_policy     = "Delete"
+      spot_max_price      = -1
+      node_taints         = ["workload=spot:NoSchedule"]
+      node_labels         = { "workload" = "spot" }
+      enable_auto_scaling = true
+      max_pods            = 30
+      os_disk_size_gb     = 30
+      availability_zones  = ["3"]
+    }
   }
 }
 
