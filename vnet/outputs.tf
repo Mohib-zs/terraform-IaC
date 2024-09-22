@@ -9,3 +9,7 @@ output "subnet_ids" {
 output "nat_gateway" {
   value = azurerm_nat_gateway.nat_gateway 
 }
+
+output "vnet_id" {
+  value = module.my-app-vnet.vnet_id
+}
