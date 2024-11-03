@@ -7,3 +7,4 @@ rg/.terraform.*
 vnet/.terraform/*
 vnet/terraform.*
 vnet/.terraform.*
+terraform.*

@@ -71,69 +71,62 @@ module "my-app-aks" {
       max_count           = 2
       availability_zones  = ["3"]      
     }
-    # spot1 = {
-    #   name                = "spot1"
-    #   vnet_subnet_id      = data.terraform_remote_state.vnet.outputs.subnet_ids["private-subnet-1"]
-    #   vm_size             = var.vm_size
-    #   min_count           = 1
-    #   max_count           = 2
-    #   priority            = "Spot"
-    #   eviction_policy     = "Delete"
-    #   spot_max_price      = -1
-    #   node_taints         = ["workload=spot:NoSchedule"]
-    #   node_labels         = { "workload" = "spot" }
-    #   enable_auto_scaling = true
-    #   max_pods            = 30
-    #   os_disk_size_gb     = 30
-    #   availability_zones  = ["1"]
-    # }
-    # spot2 = {
-    #   name                = "spot2"
-    #   vnet_subnet_id      = data.terraform_remote_state.vnet.outputs.subnet_ids["private-subnet-2"]
-    #   vm_size             = var.vm_size
-    #   min_count           = 1
-    #   max_count           = 2
-    #   priority            = "Spot"
-    #   eviction_policy     = "Delete"
-    #   spot_max_price      = -1
-    #   node_taints         = ["workload=spot:NoSchedule"]
-    #   node_labels         = { "workload" = "spot" }
-    #   enable_auto_scaling = true
-    #   max_pods            = 30
-    #   os_disk_size_gb     = 30
-    #   availability_zones  = ["2"]
-    # }
-    # spot3 = {
-    #   name                = "spot3"
-    #   vnet_subnet_id      = data.terraform_remote_state.vnet.outputs.subnet_ids["private-subnet-3"]
-    #   vm_size             = var.vm_size
-    #   min_count           = 1
-    #   max_count           = 2
-    #   priority            = "Spot"
-    #   eviction_policy     = "Delete"
-    #   spot_max_price      = -1
-    #   node_taints         = ["workload=spot:NoSchedule"]
-    #   node_labels         = { "workload" = "spot" }
-    #   enable_auto_scaling = true
-    #   max_pods            = 30
-    #   os_disk_size_gb     = 30
-    #   availability_zones  = ["3"]
-    # }
+    spot1 = {
+      name                = "spot1"
+      vnet_subnet_id      = data.terraform_remote_state.vnet.outputs.subnet_ids["private-subnet-1"]
+      vm_size             = var.vm_size
+      min_count           = 1
+      max_count           = 2
+      priority            = "Spot"
+      eviction_policy     = "Delete"
+      spot_max_price      = -1
+      node_taints         = ["workload=spot:NoSchedule"]
+      node_labels         = { "workload" = "spot" }
+      enable_auto_scaling = true
+      max_pods            = 30
+      os_disk_size_gb     = 30
+      availability_zones  = ["1"]
+    }
+    spot2 = {
+      name                = "spot2"
+      vnet_subnet_id      = data.terraform_remote_state.vnet.outputs.subnet_ids["private-subnet-2"]
+      vm_size             = var.vm_size
+      min_count           = 1
+      max_count           = 2
+      priority            = "Spot"
+      eviction_policy     = "Delete"
+      spot_max_price      = -1
+      node_taints         = ["workload=spot:NoSchedule"]
+      node_labels         = { "workload" = "spot" }
+      enable_auto_scaling = true
+      max_pods            = 30
+      os_disk_size_gb     = 30
+      availability_zones  = ["2"]
+    }
+    spot3 = {
+      name                = "spot3"
+      vnet_subnet_id      = data.terraform_remote_state.vnet.outputs.subnet_ids["private-subnet-3"]
+      vm_size             = var.vm_size
+      min_count           = 1
+      max_count           = 2
+      priority            = "Spot"
+      eviction_policy     = "Delete"
+      spot_max_price      = -1
+      node_taints         = ["workload=spot:NoSchedule"]
+      node_labels         = { "workload" = "spot" }
+      enable_auto_scaling = true
+      max_pods            = 30
+      os_disk_size_gb     = 30
+      availability_zones  = ["3"]
+    }
   }
 }
 
 # Assign Network Contributor Role to System-Assigned Identity
 resource "azurerm_role_assignment" "network_contributor" {
-  principal_id   = module.my-app-aks.kubelet_identity[0].client_id
-  role_definition_name = "Network Contributor"
-  scope          = data.terraform_remote_state.vnet.outputs.vnet_id  # Assign at the vnet level
-}
-
-# Assign AKS Cluster Admin Role to System-Assigned Identity
-resource "azurerm_role_assignment" "aks_cluster_admin" {
-  principal_id   = module.my-app-aks.kubelet_identity[0].client_id
-  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
-  scope          = module.my-app-aks.aks_id  # Assign at the AKS cluster level
+  principal_id          = module.my-app-aks.cluster_identity.principal_id
+  role_definition_name  = "Network Contributor"
+  scope                 = data.terraform_remote_state.vnet.outputs.vnet_id  # Assign at the vnet level
 }
 
 
