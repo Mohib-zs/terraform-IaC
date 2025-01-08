@@ -8,3 +8,4 @@ vnet/.terraform/*
 vnet/terraform.*
 vnet/.terraform.*
 terraform.*
+cloudflare-tls.ps1
